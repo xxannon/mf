@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Picker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Poppins', sans-serif;
+            background-color: #ff6b6b;
+            padding: 1rem;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="%23ffffff"><path d="M25,25 L35,25 L35,60 A5,5 0 0,1 25,60 Z M45,25 A15,15 0 0,1 75,25 A15,15 0 0,1 45,25 M50,65 A10,10 0 0,1 70,65 L70,75 L50,75 Z"/></svg>');
+            background-size: 200px 200px;
+            opacity: 0.1;
+            pointer-events: none;
+            z-index: 0;
+            background-repeat: repeat;
+        }
+
+        .container {
+            padding: 1rem;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .menu-selector {
+            margin-bottom: 2rem;
+        }
+
+        .dropdown {
+            width: 100%;
+            max-width: 280px;
+            padding: 0.7rem 1.2rem;
+            font-size: clamp(0.9rem, 4vw, 1.1rem);
+            border: 2px solid #ff6b6b;
+            border-radius: 25px;
+            background: white;
+            color: #2d3436;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .card-container {
+            perspective: 1000px;
+            width: min(280px, 85vw);
+            height: min(380px, 115vw);
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .shuffle-cards {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .shuffle-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateX(-100%) scale(0.9);
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            padding: 15px;
+            text-align: center;
+            pointer-events: none;
+            transform-style: preserve-3d;
+            transition: transform 0.3s;
+        }
+
+        .shuffle-card::before,
+        .shuffle-card::after {
+            content: '♠️';  /* Can be ♠️ ♥️ ♣️ ♦️ */
+            font-size: 2rem;
+            position: absolute;
+        }
+
+        .shuffle-card::before {
+            top: 10px;
+            left: 10px;
+        }
+
+        .shuffle-card::after {
+            bottom: 10px;
+            right: 10px;
+            transform: rotate(180deg);
+        }
+
+        .shuffle-card:nth-child(1)::before,
+        .shuffle-card:nth-child(1)::after {
+            content: '♠️';
+        }
+
+        .shuffle-card:nth-child(2)::before,
+        .shuffle-card:nth-child(2)::after {
+            content: '♥️';
+            color: #ff6b6b;
+        }
+
+        .shuffle-card:nth-child(3)::before,
+        .shuffle-card:nth-child(3)::after {
+            content: '♣️';
+        }
+
+        .shuffle-card:nth-child(4)::before,
+        .shuffle-card:nth-child(4)::after {
+            content: '♦️';
+            color: #ff6b6b;
+        }
+
+        .shuffle-card:nth-child(5)::before,
+        .shuffle-card:nth-child(5)::after {
+            content: '♠️';
+        }
+
+        /* Add card number */
+        .shuffle-card::before {
+            content: attr(data-number) ' \A ♠️';
+            white-space: pre;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .shuffle-card::after {
+            content: attr(data-number) ' \A ♠️';
+            white-space: pre;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .shuffle-card.animate {
+            animation: cardShuffle 1.2s ease-out forwards;
+        }
+
+        @keyframes cardShuffle {
+            0% {
+                opacity: 0;
+                transform: translateX(-100%) scale(0.9);
+            }
+            25% {
+                opacity: 1;
+                transform: translateX(-50%) scale(0.95);
+            }
+            40% {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+            60% {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+            75% {
+                opacity: 1;
+                transform: translateX(50%) scale(0.95);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(100%) scale(0.9);
+            }
+        }
+
+        .card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.6s, opacity 0.3s;
+            cursor: pointer;
+            z-index: 1;
+        }
+
+        .card.show {
+            opacity: 1 !important;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            background: #ff6b6b;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .shuffle-button {
+            padding: 0.8rem 1.5rem;
+            font-size: clamp(1rem, 3.5vw, 1.2rem);
+            width: min(200px, 60vw);
+            margin-top: 20px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .shuffle-button:hover {
+            background: #ff8e8e;
+            transform: translateY(-2px);
+        }
+
+        .recipe-link {
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .recipe-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Add deck appearance */
+        .card-container::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 10px);
+            height: calc(100% - 10px);
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            z-index: -1;
+        }
+
+        .card-container::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 20px);
+            height: calc(100% - 10px);
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            z-index: -2;
+        }
+
+        /* Add media queries for smaller screens */
+        @media screen and (max-width: 480px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .shuffle-card {
+                padding: 10px;
+            }
+
+            @keyframes riffle-shuffle {
+                0% {
+                    transform: translateX(-100%) translateY(0) rotateZ(0deg);
+                }
+                20% {
+                    transform: translateX(-50%) translateY(-15vh) rotateZ(-15deg);
+                }
+                40% {
+                    transform: translateX(0) translateY(-8vh) rotateZ(0deg);
+                }
+                60% {
+                    transform: translateX(50%) translateY(-15vh) rotateZ(15deg);
+                }
+                80% {
+                    transform: translateX(100%) translateY(0) rotateZ(0deg);
+                }
+                100% {
+                    transform: translateX(120%) translateY(0) rotateZ(0deg);
+                }
+            }
+        }
+
+        /* Add card back design */
+        .shuffle-card.face-down {
+            background: #2d3436;
+            background-image: repeating-linear-gradient(
+                45deg,
+                #ff6b6b 0,
+                #ff6b6b 10px,
+                #2d3436 10px,
+                #2d3436 20px
+            );
+        }
+
+        .shuffle-card.face-down::before,
+        .shuffle-card.face-down::after {
+            display: none;
+        }
+
+        /* Center card back design */
+        .shuffle-card.face-down::before {
+            content: '♠️';
+            font-size: 3rem;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            display: block;
+        }
+
+        /* Hide text content when face down */
+        .shuffle-card.face-down span {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="menu-selector">
+            <select id="mealType" class="dropdown">
+                <option value="" disabled selected>Select Meal Type</option>
+                <option value="breakfast">Breakfast 🍳</option>
+                <option value="appetizer">Appetizer 🥗</option>
+                <option value="entree">Entree 🍽️</option>
+                <option value="sides">Sides 🥔</option>
+                <option value="dessert">Dessert 🍰</option>
+            </select>
+        </div>
+
+        <div class="card-container">
+            <div class="shuffle-cards">
+                <!-- Shuffle cards will be added dynamically -->
+            </div>
+            <div class="card">
+                <div class="card-front">
+                    Click to reveal your meal!
+                </div>
+                <div class="card-back">
+                    <!-- Recipe will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <button class="shuffle-button">Shuffle Again</button>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script src="wheel.js"></script>
+</body>
+</html> 
